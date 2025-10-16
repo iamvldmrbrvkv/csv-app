@@ -202,7 +202,6 @@ function App() {
             </div>
 
             {/* Table */}
-                        {/* Table */}
             <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
               {/* Headers */}
               <div 
