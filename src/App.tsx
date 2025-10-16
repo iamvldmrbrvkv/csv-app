@@ -1,96 +1,103 @@
-import { useState, useRef, useEffect } from 'react'
-import Papa from 'papaparse'
-import { useVirtualizer } from '@tanstack/react-virtual'
+import { useState, useRef, useEffect } from "react";
+import Papa from "papaparse";
+import { useVirtualizer } from "@tanstack/react-virtual";
 
 interface CSVData {
-  headers: string[]
-  rows: string[][]
+  headers: string[];
+  rows: string[][];
 }
 
 function App() {
-  const [csvData, setCsvData] = useState<CSVData | null>(null)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const [fileName, setFileName] = useState('')
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const parentRef = useRef<HTMLDivElement>(null)
-  const headerRef = useRef<HTMLDivElement>(null)
+  const [csvData, setCsvData] = useState<CSVData | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [fileName, setFileName] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const parentRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
 
   /**
    * Handles CSV file upload and parsing
    */
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
+    const file = event.target.files?.[0];
+    if (!file) return;
 
-    setIsLoading(true)
-    setFileName(file.name)
+    setIsLoading(true);
+    setFileName(file.name);
 
     Papa.parse(file, {
       complete: (results) => {
-        const data = results.data as string[][]
+        const data = results.data as string[][];
         if (data.length > 0) {
-          const headers = data[0]
-          const rows = data.slice(1).filter(row => row.some(cell => cell.trim() !== ''))
-          
-          setCsvData({ headers, rows })
-          setIsLoading(false)
+          const headers = data[0];
+          const rows = data
+            .slice(1)
+            .filter((row) => row.some((cell) => cell.trim() !== ""));
+
+          setCsvData({ headers, rows });
+          setIsLoading(false);
         }
       },
       error: (error) => {
-        console.error('Error parsing CSV:', error)
-        setIsLoading(false)
-        alert('Ошибка при загрузке CSV файла')
+        console.error("Error parsing CSV:", error);
+        setIsLoading(false);
+        alert("Ошибка при загрузке CSV файла");
       },
-    })
-  }
+    });
+  };
 
-  const filteredRows = !csvData || !searchQuery.trim() 
-    ? csvData?.rows || []
-    : csvData.rows.filter(row =>
-        row.some(cell => cell.toLowerCase().includes(searchQuery.toLowerCase()))
-      )
+  const filteredRows =
+    !csvData || !searchQuery.trim()
+      ? csvData?.rows || []
+      : csvData.rows.filter((row) =>
+          row.some((cell) =>
+            cell.toLowerCase().includes(searchQuery.toLowerCase())
+          )
+        );
 
   const rowVirtualizer = useVirtualizer({
     count: filteredRows.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => 48,
     overscan: 5,
-  })
+  });
 
-  const virtualItems = rowVirtualizer.getVirtualItems()
+  const virtualItems = rowVirtualizer.getVirtualItems();
 
   useEffect(() => {
     if (parentRef.current && csvData) {
-      rowVirtualizer.measure()
+      rowVirtualizer.measure();
     }
-  }, [csvData, rowVirtualizer])
+  }, [csvData, rowVirtualizer]);
 
   /**
    * Returns appropriate column width based on header name
    */
   const getColumnWidth = (header: string): string => {
-    const headerLower = header.toLowerCase()
-    if (headerLower === 'id') return '100px'
-    if (headerLower === 'имя' || headerLower === 'name') return '180px'
-    if (headerLower === 'email') return '280px'
-    if (headerLower === 'возраст' || headerLower === 'age') return '100px'
-    if (headerLower === 'город' || headerLower === 'city') return '180px'
-    if (headerLower === 'должность' || headerLower === 'occupation') return '200px'
-    if (headerLower === 'зарплата' || headerLower === 'salary') return '120px'
-    if (headerLower === 'отдел' || headerLower === 'department') return '150px'
-    if (headerLower === 'дата_приема' || headerLower === 'join_date') return '150px'
-    return '200px' // default width
-  }
+    const headerLower = header.toLowerCase();
+    if (headerLower === "id") return "100px";
+    if (headerLower === "имя" || headerLower === "name") return "180px";
+    if (headerLower === "email") return "280px";
+    if (headerLower === "возраст" || headerLower === "age") return "100px";
+    if (headerLower === "город" || headerLower === "city") return "180px";
+    if (headerLower === "должность" || headerLower === "occupation")
+      return "200px";
+    if (headerLower === "зарплата" || headerLower === "salary") return "120px";
+    if (headerLower === "отдел" || headerLower === "department") return "150px";
+    if (headerLower === "дата_приема" || headerLower === "join_date")
+      return "150px";
+    return "200px"; // default width
+  };
 
   const handleReset = () => {
-    setCsvData(null)
-    setSearchQuery('')
-    setFileName('')
+    setCsvData(null);
+    setSearchQuery("");
+    setFileName("");
     if (fileInputRef.current) {
-      fileInputRef.current.value = ''
+      fileInputRef.current.value = "";
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -188,7 +195,8 @@ function App() {
                     <span className="font-medium">{fileName}</span>
                     <span className="mx-2">•</span>
                     <span>
-                      {filteredRows.length.toLocaleString()} / {csvData.rows.length.toLocaleString()} строк
+                      {filteredRows.length.toLocaleString()} /{" "}
+                      {csvData.rows.length.toLocaleString()} строк
                     </span>
                   </div>
                   <button
@@ -204,14 +212,14 @@ function App() {
             {/* Table */}
             <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
               {/* Headers */}
-              <div 
+              <div
                 ref={headerRef}
                 className="border-b bg-gray-50"
-                style={{ 
-                  overflowX: 'scroll',
-                  overflowY: 'hidden',
-                  scrollbarWidth: 'none',
-                  msOverflowStyle: 'none'
+                style={{
+                  overflowX: "scroll",
+                  overflowY: "hidden",
+                  scrollbarWidth: "none",
+                  msOverflowStyle: "none",
                 }}
               >
                 <style>{`
@@ -220,8 +228,14 @@ function App() {
                   }
                 `}</style>
                 <div className="inline-block min-w-full align-middle">
-                  <div className="flex" style={{ width: 'max-content', minWidth: '100%' }}>
-                    <div className="flex-shrink-0 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r bg-gray-50" style={{ width: '80px' }}>
+                  <div
+                    className="flex"
+                    style={{ width: "max-content", minWidth: "100%" }}
+                  >
+                    <div
+                      className="flex-shrink-0 px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r bg-gray-50"
+                      style={{ width: "80px" }}
+                    >
                       #
                     </div>
                     {csvData.headers.map((header, index) => (
@@ -241,23 +255,23 @@ function App() {
               <div
                 ref={parentRef}
                 className="overflow-auto"
-                style={{ height: '600px' }}
+                style={{ height: "600px" }}
                 onScroll={(e) => {
                   if (headerRef.current) {
-                    headerRef.current.scrollLeft = e.currentTarget.scrollLeft
+                    headerRef.current.scrollLeft = e.currentTarget.scrollLeft;
                   }
                 }}
               >
                 <div
                   style={{
                     height: `${rowVirtualizer.getTotalSize()}px`,
-                    width: 'max-content',
-                    minWidth: '100%',
-                    position: 'relative',
+                    width: "max-content",
+                    minWidth: "100%",
+                    position: "relative",
                   }}
                 >
                   {virtualItems.map((virtualRow) => {
-                    const row = filteredRows[virtualRow.index]
+                    const row = filteredRows[virtualRow.index];
                     return (
                       <div
                         key={virtualRow.key}
@@ -267,21 +281,26 @@ function App() {
                           transform: `translateY(${virtualRow.start}px)`,
                         }}
                       >
-                        <div className="flex-shrink-0 px-4 py-3 text-sm text-gray-500 border-r bg-white" style={{ width: '80px' }}>
+                        <div
+                          className="flex-shrink-0 px-4 py-3 text-sm text-gray-500 border-r bg-white"
+                          style={{ width: "80px" }}
+                        >
                           {virtualRow.index + 1}
                         </div>
                         {row.map((cell, cellIndex) => (
                           <div
                             key={cellIndex}
                             className="flex-shrink-0 px-4 py-3 text-sm text-gray-900 border-r last:border-r-0 truncate"
-                            style={{ width: getColumnWidth(csvData.headers[cellIndex]) }}
+                            style={{
+                              width: getColumnWidth(csvData.headers[cellIndex]),
+                            }}
                             title={cell}
                           >
                             {cell}
                           </div>
                         ))}
                       </div>
-                    )
+                    );
                   })}
                 </div>
               </div>
@@ -296,8 +315,7 @@ function App() {
         )}
       </main>
     </div>
-  )
+  );
 }
 
-export default App
-
+export default App;
