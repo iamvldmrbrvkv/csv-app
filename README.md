@@ -79,9 +79,9 @@ node generate-large-test-data.cjs
 csv-app/
 ├── src/
 │   ├── App.tsx              # Главный компонент
-│   ├── App.css              # Стили
 │   ├── main.tsx             # Точка входа
-│   └── index.css            # Глобальные стили
+│   ├── index.css            # Глобальные стили
+│   └── assets/              # Статические ресурсы
 ├── generate-large-test-data.cjs  # Генератор тестовых данных
 ├── test-data-100k.csv       # Тестовый файл 100k строк
 ├── test-data-1m.csv         # Тестовый файл 1M строк
