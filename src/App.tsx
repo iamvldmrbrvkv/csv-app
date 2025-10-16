@@ -1,5 +1,6 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Papa from 'papaparse'
+import { useVirtualizer } from '@tanstack/react-virtual'
 
 interface CSVData {
   headers: string[]
@@ -15,6 +16,9 @@ function App() {
   const parentRef = useRef<HTMLDivElement>(null)
   const headerRef = useRef<HTMLDivElement>(null)
 
+  /**
+   * Handles CSV file upload and parsing
+   */
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
@@ -41,16 +45,30 @@ function App() {
     })
   }
 
-  // Filter rows based on search query (React Compiler handles memoization automatically)
   const filteredRows = !csvData || !searchQuery.trim() 
     ? csvData?.rows || []
     : csvData.rows.filter(row =>
         row.some(cell => cell.toLowerCase().includes(searchQuery.toLowerCase()))
       )
 
-  // Using CSS containment (contain + content-visibility) for performance optimization
+  const rowVirtualizer = useVirtualizer({
+    count: filteredRows.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 48,
+    overscan: 5,
+  })
 
-  // Function to get column width based on header name
+  const virtualItems = rowVirtualizer.getVirtualItems()
+
+  useEffect(() => {
+    if (parentRef.current && csvData) {
+      rowVirtualizer.measure()
+    }
+  }, [csvData, rowVirtualizer])
+
+  /**
+   * Returns appropriate column width based on header name
+   */
   const getColumnWidth = (header: string): string => {
     const headerLower = header.toLowerCase()
     if (headerLower === 'id') return '100px'
@@ -220,7 +238,7 @@ function App() {
                 </div>
               </div>
 
-              {/* Rows - Using CSS containment for performance */}
+              {/* Rows - Using Virtualization for performance */}
               <div
                 ref={parentRef}
                 className="overflow-auto"
@@ -231,32 +249,41 @@ function App() {
                   }
                 }}
               >
-                <div style={{ width: 'max-content', minWidth: '100%' }}>
-                  {filteredRows.map((row, rowIndex) => (
-                    <div
-                      key={rowIndex}
-                      className="flex hover:bg-gray-50 border-b"
-                      style={{
-                        minHeight: '48px',
-                        contain: 'layout style paint',
-                        contentVisibility: 'auto',
-                      }}
-                    >
-                      <div className="flex-shrink-0 px-4 py-3 text-sm text-gray-500 border-r bg-white" style={{ width: '80px' }}>
-                        {rowIndex + 1}
-                      </div>
-                      {row.map((cell, cellIndex) => (
-                        <div
-                          key={cellIndex}
-                          className="flex-shrink-0 px-4 py-3 text-sm text-gray-900 border-r last:border-r-0 truncate"
-                          style={{ width: getColumnWidth(csvData.headers[cellIndex]) }}
-                          title={cell}
-                        >
-                          {cell}
+                <div
+                  style={{
+                    height: `${rowVirtualizer.getTotalSize()}px`,
+                    width: 'max-content',
+                    minWidth: '100%',
+                    position: 'relative',
+                  }}
+                >
+                  {virtualItems.map((virtualRow) => {
+                    const row = filteredRows[virtualRow.index]
+                    return (
+                      <div
+                        key={virtualRow.key}
+                        className="flex hover:bg-gray-50 border-b absolute top-0 left-0 w-full"
+                        style={{
+                          height: `${virtualRow.size}px`,
+                          transform: `translateY(${virtualRow.start}px)`,
+                        }}
+                      >
+                        <div className="flex-shrink-0 px-4 py-3 text-sm text-gray-500 border-r bg-white" style={{ width: '80px' }}>
+                          {virtualRow.index + 1}
                         </div>
-                      ))}
-                    </div>
-                  ))}
+                        {row.map((cell, cellIndex) => (
+                          <div
+                            key={cellIndex}
+                            className="flex-shrink-0 px-4 py-3 text-sm text-gray-900 border-r last:border-r-0 truncate"
+                            style={{ width: getColumnWidth(csvData.headers[cellIndex]) }}
+                            title={cell}
+                          >
+                            {cell}
+                          </div>
+                        ))}
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
             </div>
